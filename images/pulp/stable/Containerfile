@@ -14,7 +14,7 @@ ARG PULP_RPM_VERSION=""
 ARG PULP_OSTREE_VERSION=""
 ARG PULP_UI_URL=""
 
-ENV PULP_UI=true
+ENV PULP_UI=${PULP_UI_URL:-false}
 COPY images/assets/requirements.extra.txt /requirements.extra.txt
 
 RUN pip3 install --upgrade \
@@ -44,7 +44,7 @@ RUN ln $(pip3 show pulp_python | sed -n -e 's/Location: //p')/pulp_python/app/we
 
 RUN <<EOF
 if [[ "$PULP_UI_URL" ]]; then
-    mkdir -p /usr/share/nginx/static/pulp_ui
-    curl -Ls $PULP_UI_URL | tar -xzv -C /usr/share/nginx/static/pulp_ui
+    mkdir -p "${PULP_STATIC_ROOT}pulp_ui"
+    curl -Ls $PULP_UI_URL | tar -xzv -C "${PULP_STATIC_ROOT}pulp_ui"
 fi
 EOF

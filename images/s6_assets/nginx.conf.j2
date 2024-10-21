@@ -107,12 +107,15 @@ http {
 
         {% if ui | default(false) -%}
         location /static/pulp_ui/ {
-            root /usr/share/nginx/;
+            root {{ pulp_ui_static|replace("static/pulp_ui/", "") }};
             try_files $uri /static/pulp_ui/index.html;
         }
         location /ui/ {
-            alias /usr/share/nginx/static/pulp_ui/;
-            try_files $uri /static/pulp_ui/index.html
+            alias {{ pulp_ui_static }};
+            try_files $uri index.html;
+        }
+        location /pulp-ui-config.json {
+            root {{ pulp_ui_static }};
         }
         {%- endif %}
 
