@@ -18,11 +18,11 @@ fi
 echo "Nameserver is: $NAMESERVER"
 
 echo "Generating nginx config"
-envsubst '$NAMESERVER' < /etc/opt/rh/rh-nginx116/nginx/nginx.conf.template > /etc/opt/rh/rh-nginx116/nginx/nginx.conf
+envsubst '$NAMESERVER' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
 # We cannot use upstream server groups with a DNS resolver without nginx plus
 # So we modifying the files to use the variables rather than the upstream server groups
-for file in /opt/app-root/etc/nginx.default.d/*.conf ; do
+for file in /etc/nginx/pulp/*.conf ; do
   echo "Modifying $file"
   sed -i 's/pulp-api/$pulp_api:24817/' $file
   sed -i 's/pulp-content/$pulp_content:24816/' $file
