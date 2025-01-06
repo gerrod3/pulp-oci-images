@@ -9,10 +9,10 @@ RUN ln $(pip3 show pulp_python | sed -n -e 's/Location: //p')/pulp_python/app/we
 
 
 
-FROM docker.io/centos/nginx-116-centos7:1.16
+FROM docker.io/nginx:latest
 
-
-COPY --from=builder /etc/nginx/pulp/*.conf "${NGINX_DEFAULT_CONF_PATH}"/
+RUN mkdir -p /etc/nginx/pulp
+COPY --from=builder /etc/nginx/pulp/*.conf /etc/nginx/pulp
 
 # Run script uses standard ways to run the application
 CMD nginx -g "daemon off;"
