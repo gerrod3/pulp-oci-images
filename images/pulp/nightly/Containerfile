@@ -13,6 +13,7 @@ RUN pip3 install --upgrade \
   git+https://github.com/pulp/pulp_ostree@main \
   git+https://github.com/pulp/pulp_python@main \
   git+https://github.com/pulp/pulp_rpm@main \
+  git+https://github.com/pulp/pulp_npm@main \
   -r /requirements.extra.txt \
   -c /constraints.txt && \
   rm -rf /root/.cache/pip

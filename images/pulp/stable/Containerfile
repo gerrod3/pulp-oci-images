@@ -13,6 +13,7 @@ ARG PULP_PYTHON_VERSION=""
 ARG PULP_RPM_VERSION=""
 ARG PULP_OSTREE_VERSION=""
 ARG PULP_UI_URL=""
+ARG PULP_NPM_VERSION=""
 
 ENV PULP_UI=${PULP_UI_URL:-false}
 COPY images/assets/requirements.extra.txt /requirements.extra.txt
@@ -29,6 +30,7 @@ RUN pip3 install --upgrade \
   pulp-python${PULP_PYTHON_VERSION} \
   pulp-rpm${PULP_RPM_VERSION} \
   pulp-ostree${PULP_OSTREE_VERSION} \
+  pulp-npm${PULP_NPM_VERSION} \
   -r /requirements.extra.txt \
   -c /constraints.txt && \
   rm -rf /root/.cache/pip
@@ -47,4 +49,3 @@ RUN \
     mkdir -p "${PULP_STATIC_ROOT}pulp_ui"; \
     curl -Ls $PULP_UI_URL | tar -xzv -C "${PULP_STATIC_ROOT}pulp_ui"; \
   fi
-
