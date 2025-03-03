@@ -94,3 +94,18 @@ runs:
         echo "app_version=${app_version}" >> "$GITHUB_OUTPUT"
         echo "app_branch=${app_branch}" >> "$GITHUB_OUTPUT"
       shell: bash
+
+    - name: Label image with metadata
+      run: |
+        packages=$(podman run --pull=never pulp/${{ inputs.image_name }}:${TEMP_APP_TAG}-amd64 bash -c "pip3 list --format json")
+        plugin_versions=$(echo $packages | jq -r '.[] | select(.name | contains("pulp")) | .name + "==" + .version')
+        postgres=$(podman run --pull=never pulp/${{ inputs.image_name }}:${TEMP_APP_TAG}-amd64 bash -c "postgres --version | sed -n -e 's/postgres (PostgreSQL) //p'")
+        python_version=$(podman run --pull=never pulp/${{ inputs.image_name }}:${TEMP_APP_TAG}-amd64 bash -c "python3 --version | sed -n -e 's/Python //p'")
+        files_hash="${{ hashFiles(format('images/{0}/{1}/**', inputs.image_name, inputs.image_variant), 'images/Containerfile.core.base', 'images/pulp_ci_centos/Containerfile', 'images/assets/**', 'images/s6_assets/**') }}"
+        for ARCH in arm64 amd64
+        do
+          tag="pulp/${{ inputs.image_name }}:${TEMP_APP_TAG}-${ARCH}"
+          echo "FROM ${tag}" | podman build --pull=false --platform linux/${ARCH} --format docker --label "org.pulp.plugins=${plugin_versions}" --label "org.pulp.postgres-version=${postgres}" --label "org.pulp.python-version=${python_version}" --label "org.pulp.containerfiles-hash=${files_hash}" --tag ${tag} -
+        done
+        podman image inspect pulp/${{ inputs.image_name }}:${TEMP_APP_TAG}-amd64 --format='{{ .Config.Labels }}'
+      shell: bash
