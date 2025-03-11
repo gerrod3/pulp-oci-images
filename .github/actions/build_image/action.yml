@@ -44,6 +44,9 @@ runs:
       run: pip install httpie jq packaging
       shell: bash
 
+    - name: Set up oras
+      uses: oras-project/setup-oras@v1
+
     - name: Restore podman images from cache
       uses: actions/cache/restore@v4
       with:
@@ -68,32 +71,23 @@ runs:
         fi
       shell: bash
 
-    - name: Set hash key
-      run: echo "VERSIONKEY=versions-${{ github.ref_name }}=${{ hashFiles(format('images/{0}/{1}/**', inputs.image_name, inputs.image_variant)) }}" >> $GITHUB_ENV
-      shell: bash
-
-    - name: Restore last builds versions from cache
-      id: cache
-      uses: actions/cache/restore@v4
-      with:
-        key: ${{ env.VERSIONKEY }}
-        path: versions.freeze
-
     - name: Check if rebuild is needed
       id: rebuild_needed
       run: |
         # Rebuilds are needed for 
         # 1. CI is being ran in a PR or is a nightly run
         # 2. Base images were rebuilt
-        # 3. New pulp versions was released
+        # 3. New pulp versions were released
         build=true
         if [[ "${{ github.event_name }}" != "pull_request" && "${{ inputs.image_variant }}" != "nightly" && -z "${{ inputs.built_base_images }}" ]]; then
-          if [[ "${{ steps.cache.outputs.cache-hit  }}" == "true" ]]; then
-            # Script returns non-zero (100) when new versions are available
-            cat versions.freeze
-            if python .ci/scripts/check_up_to_date.py ${{ github.ref_name }} versions.freeze; then
-              build=false
-            fi
+          # Fetch the latest plugin versions from the last published built image
+          branch=${{ github.base_ref || github.ref_name }}
+          config=$(oras manifest fetch-config --platform linux/amd64 ghcr.io/pulp/${{ inputs.image_name }}:${branch} | jq -r '.config.Labels')
+          echo -e "${config}" | jq -r '."org.pulp.plugins"' > versions.freeze
+          # Script returns non-zero (100) when new versions are available
+          cat versions.freeze
+          if python .ci/scripts/check_up_to_date.py $branch versions.freeze; then
+            build=false
           fi
         fi
         echo "build=${build}" >> "$GITHUB_OUTPUT"
@@ -122,10 +116,8 @@ runs:
     - name: Set version and branch image tags
       id: image_version_branch
       run: |
-        base_image=$(echo ${{ inputs.image_name }} | cut -d '-' -f1)
         if [[ "${{ steps.rebuild_needed.outputs.build }}" == "true" ]]; then
           app_version=$(podman run --pull=never pulp/${{ inputs.image_name }}:ci-amd64 bash -c "pip3 show pulpcore | sed -n -e 's/Version: //p'")
-          podman run --pull=never pulp/${{ inputs.image_name }}:ci-amd64 bash -c "pip3 freeze | grep pulp" > versions.freeze
         else
           app_version=$(grep pulpcore versions.freeze | sed -n -e 's/pulpcore==//p')
         fi
@@ -135,10 +127,10 @@ runs:
         echo "APP_BRANCH: ${app_branch}"
         echo "app_version=${app_version}" >> "$GITHUB_OUTPUT"
         echo "app_branch=${app_branch}" >> "$GITHUB_OUTPUT"
-        cat versions.freeze
       shell: bash
 
     - name: Label image with metadata
+      if: steps.rebuild_needed.outputs.build == 'true'
       run: |
         packages=$(podman run --pull=never pulp/${{ inputs.image_name }}:ci-amd64 bash -c "pip3 list --format json")
         plugin_versions=$(echo $packages | jq -r '.[] | select(.name | contains("pulp")) | .name + "==" + .version')
@@ -153,17 +145,3 @@ runs:
         done
         podman image inspect pulp/${{ inputs.image_name }}:ci-amd64 --format='{{ .Config.Labels }}'
       shell: bash
-
-    - name: Clear cache for next upload
-      if: steps.rebuild_needed.outputs.build == 'true' && steps.cache.outputs.cache-hit == 'true' && github.event_name != 'pull_request'
-      run: |
-        echo "Deleting existing cache for ${{ env.VERSIONKEY }}"
-        gh cache delete ${{ env.VERSIONKEY }} -R ${{ github.repository }}
-      shell: bash
-
-    - name: Cache versions
-      if: steps.rebuild_needed.outputs.build == 'true' && github.event_name != 'pull_request'
-      uses: actions/cache/save@v4
-      with:
-        key: ${{ env.VERSIONKEY }}
-        path: versions.freeze

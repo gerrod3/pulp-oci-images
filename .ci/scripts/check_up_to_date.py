@@ -10,9 +10,10 @@ PACKAGES = [
     "pulp-deb",
     "pulp-gem",
     "pulp-maven",
+    "pulp-npm",
+    "pulp-ostree",
     "pulp-python",
     "pulp-rpm",
-    "pulp-ostree"
 ]
 
 INDEX = "https://pypi.org"
