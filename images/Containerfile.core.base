@@ -36,6 +36,7 @@ RUN dnf -y module enable nginx:1.22
 
 # glibc-langpack-en is needed to provide the en_US.UTF-8 locale, which Pulp
 # seems to need.
+# cairo/gobject are needed for PyGObject, which pulp_ostree requires
 RUN dnf -y install python${PYTHON_VERSION} python3-cryptography python${PYTHON_VERSION}-devel && \
     dnf -y install openssl openssl-devel && \
     dnf -y install openldap-devel --exclude selinux* && \
@@ -48,6 +49,7 @@ RUN dnf -y install python${PYTHON_VERSION} python3-cryptography python${PYTHON_V
     dnf -y install libpq-devel && \
     dnf -y install python3-setuptools && \
     dnf -y install podman fuse-overlayfs buildah --exclude container-selinux && \
+    dnf -y install cairo-devel gobject-introspection-devel cairo-gobject-devel && \
     dnf -y install ostree-libs ostree && \
     dnf -y install skopeo && \
     dnf -y install sudo && \
