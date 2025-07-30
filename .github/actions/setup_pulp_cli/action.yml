@@ -1,0 +1,29 @@
+---
+name: Setup Pulp CLI
+description: Setup the Pulp CLI
+inputs:
+  config:
+    description: 'List of cli config options'
+    required: true
+  plugins:
+    description: 'List of additional plugins to install'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+
+    - name: Install Pulp CLI
+      run: |
+        pip install pulp-cli[pygments] ${{ inputs.plugins }}
+      shell: bash
+
+    - name: Configure Pulp CLI
+      run: |
+        pulp config create ${{ inputs.config }}
+        pulp config validate
+      shell: bash

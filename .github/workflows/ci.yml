@@ -61,6 +61,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Pulp CLI
+        uses: "./.github/actions/setup_pulp_cli"
+        with:
+          config: |
+            --base-url ${{ vars.PULP_SERVICES_HOST }} \
+            --api-root ${{ vars.PULP_SERVICES_API_ROOT }} \
+            --domain ${{ vars.PULP_SERVICES_DOMAIN }} \
+            --client-id ${{ secrets.PULP_CLIENT_ID }} \
+            --client-secret ${{ secrets.PULP_CLIENT_SECRET }}
+
       - name: Build base images
         id: build_base_images
         uses: "./.github/actions/base_images"
