@@ -18,7 +18,7 @@ PACKAGES = [
 
 INDEX = "https://pypi.org"
 
-def check_update(branch, current_versions):
+def check_update(branch, current_versions, should_exit=True):
     """
     Go through each of the image's main Pulp components and see if there is a new version available.
     """
@@ -59,9 +59,13 @@ def check_update(branch, current_versions):
         print("Updates needed for:")
         for plugin, version in new_versions.items():
             print(f"{plugin}: {current_versions[plugin]} -> {version!s}")
-        exit(100)
+        if should_exit:
+            exit(100)
+        else:
+            return True
 
     print("No updates needed :)")
+    return False
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

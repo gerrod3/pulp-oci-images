@@ -31,6 +31,9 @@ jobs:
         with:
           python-version: 3.11
 
+      - name: Set up oras
+        uses: oras-project/setup-oras@v1
+
       - name: Update to the latest pip
         run: python -m pip install --upgrade pip
 
@@ -39,7 +42,12 @@ jobs:
           echo ::group::PYDEPS
           pip install gitpython requests packaging jinja2 pyyaml
           echo ::endgroup::
-          python .ci/scripts/update_ci_branches.py
+          if [[ $(date +%u) -eq 7 ]]; then
+            # Run CI for all branches on Sunday
+            python .ci/scripts/release_ci_branches.py
+          else
+            python .ci/scripts/release_ci_branches.py --optimize
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
 
