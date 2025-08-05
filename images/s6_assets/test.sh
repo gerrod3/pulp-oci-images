@@ -31,6 +31,7 @@ start_container_and_wait() {
              -e PULP_DOMAIN_ENABLED=${domain_enabled} \
              "$1"
 
+  sleep 3  # Wait for the container to start
   podman exec pulp s6-rc -ba list
   for _ in $(seq 30)
   do
@@ -77,7 +78,7 @@ if [ "$old_image" != "" ]; then
   start_container_and_wait $old_image
   podman rm -f pulp
 fi
-if [[ "$image" == "pulp/pulp:ci-amd64" ]]; then
+if [[ "$image" == "pulp/pulp:ci" ]]; then
   domain_enabled=true
 fi
 start_container_and_wait $image
