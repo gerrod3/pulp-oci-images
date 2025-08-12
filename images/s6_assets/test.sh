@@ -2,8 +2,10 @@
 set -euo pipefail
 
 cleanup() {
-  echo ::group::INFO
+  echo ::group::PIP_LIST
   podman exec pulp bash -c "pip list && pip install pipdeptree && pipdeptree"
+  echo ::endgroup::
+  echo ::group::PODMAN_LOGS
   podman logs pulp
   echo ::endgroup::
   podman stop pulp
@@ -27,7 +29,8 @@ start_container_and_wait() {
              -e PULP_DEFAULT_ADMIN_PASSWORD=password \
              -e PULP_HTTPS=${pulp_https} \
              "$1"
-  sleep 10
+
+  podman exec pulp s6-rc -ba list
   for _ in $(seq 30)
   do
     sleep 3
