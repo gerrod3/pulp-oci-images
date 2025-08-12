@@ -5,7 +5,10 @@ import subprocess
 import json
 from yaml import safe_load
 from packaging import version
-from .check_up_to_date import check_update
+import sys
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from check_up_to_date import check_update
 
 
 # We use this to check if the version is x,y, like a normal branch.
