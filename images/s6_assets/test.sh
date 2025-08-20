@@ -28,6 +28,7 @@ start_container_and_wait() {
              --device /dev/fuse \
              -e PULP_DEFAULT_ADMIN_PASSWORD=password \
              -e PULP_HTTPS=${pulp_https} \
+             -e PULP_DOMAIN_ENABLED=${domain_enabled} \
              "$1"
 
   podman exec pulp s6-rc -ba list
@@ -59,6 +60,7 @@ else
   port=443
   pulp_https=true
 fi
+domain_enabled=false
 
 # Configure the GHA host for buildah/skopeo running within the pulp container
 # Default range is 165536-231071, 64K long
@@ -74,6 +76,9 @@ echo "ORPHAN_PROTECTION_TIME = 0" >> settings/settings.py
 if [ "$old_image" != "" ]; then
   start_container_and_wait $old_image
   podman rm -f pulp
+fi
+if [[ "$image" == "pulp/pulp:ci-amd64" ]]; then
+  domain_enabled=true
 fi
 start_container_and_wait $image
 
