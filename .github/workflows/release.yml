@@ -208,7 +208,7 @@ jobs:
           repo_digests="${repo_digests} ${{ steps.build_pulp_image.outputs.rebuilt_images }}"
           for img in ${image_names}; do
             # This takes advantage of the fact that skopeo will choose the correct platform for the image
-            repo_digests="${repo_digests} $(skopeo inspect --format='{{ .Digest }}' registry://${img} )"
+            repo_digests="${repo_digests} $(skopeo inspect --format='{{ .Digest }}' docker://${img} )"
           done
           echo "${{ matrix.image_variant }}_${ARCH}=${repo_digests}" >> $GITHUB_OUTPUT
 
@@ -272,7 +272,7 @@ jobs:
             podman tag "ghcr.io/pulp/base@${base_digests[0]}" pulp/base:ci-arm64
             podman tag "ghcr.io/pulp/base@${base_digests[1]}" pulp/base:ci-amd64
             podman pull "ghcr.io/pulp/pulp-ci-centos9@${pulp_ci_centos9_digests[0]}" "ghcr.io/pulp/pulp-ci-centos9@${pulp_ci_centos9_digests[1]}"
-            podman tag "ghcr.io/pulp/pulp-ci-centos9@${pulp_ci_centos9_digests[1]}" pulp/pulp-ci-centos9:ci-arm64
+            podman tag "ghcr.io/pulp/pulp-ci-centos9@${pulp_ci_centos9_digests[0]}" pulp/pulp-ci-centos9:ci-arm64
             podman tag "ghcr.io/pulp/pulp-ci-centos9@${pulp_ci_centos9_digests[1]}" pulp/pulp-ci-centos9:ci-amd64
             images="base pulp-ci-centos9"
           fi
@@ -284,6 +284,7 @@ jobs:
             podman tag "ghcr.io/pulp/pulp-minimal@${pulp_minimal_digests[0]}" pulp/pulp-minimal:ci-arm64
             podman tag "ghcr.io/pulp/pulp-minimal@${pulp_minimal_digests[1]}" pulp/pulp-minimal:ci-amd64
             podman tag "ghcr.io/pulp/pulp-web@${pulp_web_digests[0]}" pulp/pulp-web:ci-arm64
+            podman tag "ghcr.io/pulp/pulp-web@${pulp_web_digests[1]}" pulp/pulp-web:ci-amd64
             images="${images} pulp-minimal pulp-web"
           fi
           if [[ ${{ contains(env.rebuilt_pulp_image, 'true') }} == 'true' ]]; then
