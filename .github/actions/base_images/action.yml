@@ -37,6 +37,7 @@ runs:
           config=$(oras manifest fetch-config --platform linux/amd64 ghcr.io/pulp/pulp-ci-centos9:${branch} | jq -r '.config.Labels')
           latest_hash=$(echo "${config}" | jq -r '."org.pulp.basefiles-hash"')
           build=true
+          echo "Checking hash for ${branch}: ${latest_hash}"
           if [[ "${latest_hash}" == "${HASH}" ]]; then
             if podman run ghcr.io/pulp/pulp-ci-centos9:${branch} bash -c "dnf check-upgrade"; then
               echo "No base images rebuild needed :)"
