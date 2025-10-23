@@ -87,6 +87,7 @@ jobs:
 
   build-and-test-images:
     needs: base
+    continue-on-error: ${{ matrix.image_variant == 'nightly' }}
     strategy:
       fail-fast: false
       matrix:
@@ -170,7 +171,9 @@ jobs:
           if [[ ${{ matrix.image_variant }} == "stable" ]]; then
             TAG="${{ steps.app_version.outputs.stable_app_version }}-$ARCH"
           else
-            TAG="nightly-$ARCH"
+            # Nightly never rebuilds the base images, but always rebuilds the app images
+            # So set tag to latest to ensure the base images are pulled correctly
+            TAG="latest-$ARCH"
           fi
           echo "TAG=${TAG}" >> $GITHUB_ENV
           echo "ARCH=${ARCH}" >> $GITHUB_ENV
@@ -198,6 +201,7 @@ jobs:
           else
             image_names="${image_names} ghcr.io/pulp/pulp:${trimmed_tag}"
           fi
+          echo "Image names: ${image_names}"
           echo "image_names=${image_names}" >> $GITHUB_ENV
 
       - name: Set output of repo digests of uploaded images
@@ -210,6 +214,7 @@ jobs:
             # This takes advantage of the fact that skopeo will choose the correct platform for the image
             repo_digests="${repo_digests} $(skopeo inspect --format='{{ .Digest }}' docker://${img} )"
           done
+          echo "Repo digests: ${repo_digests}"
           echo "${{ matrix.image_variant }}_${ARCH}=${repo_digests}" >> $GITHUB_OUTPUT
 
       - name: Logs
@@ -240,6 +245,19 @@ jobs:
         image_variant: ${{ fromJSON(needs.base.outputs.image_variants) }}
     steps:
       - uses: actions/checkout@v4
+
+      # Nightly is allowed to fail the build step, so check if we need to publish
+      - name: Check nightly passed
+        if: ${{ matrix.image_variant == 'nightly' }}
+        run: |
+          arm=(${{ needs.build-and-test-images.outputs.nightly_arm }})
+          amd=(${{ needs.build-and-test-images.outputs.nightly_amd }})
+          if [[ ${#arm[@]} -ne 8 || ${#amd[@]} -ne 8 ]]; then
+            echo "Nightly build failed, check previous steps"
+            echo "arm digests: ${arm[@]}"
+            echo "amd digests: ${amd[@]}"
+            exit 1
+          fi
 
       # Merging the arm & amd images together and determining if they need to be published
       - name: Get previous output
@@ -294,6 +312,7 @@ jobs:
             podman tag "ghcr.io/pulp/pulp@${pulp_digests[1]}" pulp/pulp:ci-amd64
             images="${images} pulp"
           fi
+          podman images -a
           echo "Images to publish: $images"
           echo "IMAGES=${images}" >> $GITHUB_ENV
 
