@@ -186,7 +186,7 @@ jobs:
           else
             if [[ ${{ matrix.image_variant }} == "nightly" ]]; then
               # Nightly never rebuilds the base images so there isn't a nightly tag to pull from
-              image_names="ghcr.io/pulp/base:latest-${ARCH} ghcr.io/pulp/pulp-ci-centos9:latest-${ARCH}"
+              image_names="ghcr.io/pulp/base:latest ghcr.io/pulp/pulp-ci-centos9:latest"
             else
               image_names="ghcr.io/pulp/base:${trimmed_tag} ghcr.io/pulp/pulp-ci-centos9:${trimmed_tag}"
             fi
