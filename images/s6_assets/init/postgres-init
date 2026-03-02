@@ -41,9 +41,10 @@ if [ -d "${PGDATA}/base" -a -f "${PGDATA}/PG_VERSION" ]; then
       cat > "${REPO_FILE}" <<EOF
 [pgdg13-eol]
 name=PostgreSQL 13 EOL for RHEL 9 - ${ARCH}
-baseurl=https://download.postgresql.org/pub/repos/yum/13/redhat/rhel-9-${ARCH}/
+baseurl=https://yum-archive.postgresql.org/13/redhat/rhel-9-${ARCH}/
 enabled=1
-gpgcheck=0
+gpgcheck=1
+gpgkey=https://yum.postgresql.org/keys/PGDG-RPM-GPG-KEY-RHEL
 EOF
       echo -e "${PREFIX} ${ORANGE}Created repository file ${REPO_FILE}${ENDCOLOR}"
     fi
