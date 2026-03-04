@@ -1,2 +1,1 @@
 pulpcore>=3.21
-pulp_container>=2.14

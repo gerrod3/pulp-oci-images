@@ -38,7 +38,7 @@ runs:
         python-version: 3.11
 
     - name: Install python deps
-      run: pip install httpie jq packaging
+      run: pip install httpie jq packaging requests pyyaml
       shell: bash
 
     - name: Set up oras
@@ -57,6 +57,19 @@ runs:
         fi
       shell: bash
 
+    - name: Generate plugin version constraints
+      run: |
+        branch=${{ github.base_ref || github.ref_name }}
+        if [[ "${branch}" != "latest" ]]; then
+          echo "Generating supported-branch constraints for branch ${branch}"
+          python .ci/scripts/get_supported_specifiers.py >> images/assets/constraints.txt
+          echo "Plugin constraints:"
+          cat images/assets/constraints.txt
+        else
+          echo "Latest branch: no plugin constraints needed"
+        fi
+      shell: bash
+
     - name: Check if rebuild is needed
       id: rebuild_needed
       run: |
@@ -72,7 +85,7 @@ runs:
           echo -e "${config}" | jq -r '."org.pulp.plugins"' > versions.freeze
           # Script returns non-zero (100) when new versions are available
           cat versions.freeze
-          if python .ci/scripts/check_up_to_date.py $branch versions.freeze; then
+          if python .ci/scripts/check_up_to_date.py $branch versions.freeze --plugin-specifiers images/assets/constraints.txt; then
             build=false
           fi
         fi
