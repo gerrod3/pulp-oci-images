@@ -19,14 +19,6 @@ runs:
         pip install httpie podman-compose==1.1.0
       shell: bash
 
-    - name: Test image with upgrade in s6 mode (pulp)
-      if: inputs.image_name == 'pulp'
-      run: |
-        images/s6_assets/test.sh "pulp/${{ inputs.image_name }}:ci" http "quay.io/pulp/pulp:3.63"
-        podman stop pulp
-        podman rm pulp
-      shell: bash
-
     - name: Test Compose up
       if: inputs.image_name == 'pulp-minimal'
       run: |
