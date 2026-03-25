@@ -1,0 +1,1 @@
+Reworked pulp-web nginx configuration to support HTTPS, domain-enabled routes, configurable API root/content path, and the Pulp UI. The image is now self-contained and no longer requires external nginx config mounts.

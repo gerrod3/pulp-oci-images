@@ -2,18 +2,46 @@ ARG FROM_TAG="stable"
 FROM pulp/pulp-minimal:${FROM_TAG} as builder
 
 RUN mkdir -p /etc/nginx/pulp \
-             /www/data \
   && ln $(pip show pulp_ansible | sed -n -e 's/Location: //p')/pulp_ansible/app/webserver_snippets/nginx.conf /etc/nginx/pulp/pulp_ansible.conf \
   && ln $(pip show pulp_container | sed -n -e 's/Location: //p')/pulp_container/app/webserver_snippets/nginx.conf /etc/nginx/pulp/pulp_container.conf \
   && ln $(pip show pulp_python | sed -n -e 's/Location: //p')/pulp_python/app/webserver_snippets/nginx.conf /etc/nginx/pulp/pulp_python.conf
 
+ARG PULP_UI_URL=""
+RUN mkdir -p /var/lib/operator/static/pulp_ui && \
+  if [ -n "$PULP_UI_URL" ]; then \
+    curl -Ls "$PULP_UI_URL" | tar -xzv -C /var/lib/operator/static/pulp_ui; \
+  fi
+
 
 FROM docker.io/nginx:latest
 
-RUN mkdir -p /etc/nginx/pulp
-COPY --from=builder /etc/nginx/pulp/*.conf /etc/nginx/pulp
+ARG PULP_UI_URL=""
 
-RUN chmod 775 /var/cache/nginx /var/run
+RUN mkdir -p /etc/nginx/pulp \
+             /etc/nginx/pulp-web/templates \
+             /etc/nginx/pulp-web/server.d \
+             /etc/nginx/pulp-web/location.d \
+             /etc/nginx/pulp-web/http.d \
+             /var/lib/operator/static/pulp_ui
 
-# Run script uses standard ways to run the application
-CMD nginx -g "daemon off;"
+COPY --from=builder /etc/nginx/pulp/*.conf /etc/nginx/pulp/
+COPY --from=builder /var/lib/operator/static/pulp_ui/ /var/lib/operator/static/pulp_ui/
+
+COPY images/pulp-web/templates/ /etc/nginx/pulp-web/templates/
+COPY images/pulp-web/entrypoint.sh /entrypoint.sh
+
+RUN chmod +x /entrypoint.sh && \
+    chmod -R 775 /etc/nginx/pulp /etc/nginx/pulp-web /var/cache/nginx /var/run
+
+ENV PULP_UI=${PULP_UI_URL:+true} \
+    PULP_HTTPS=false \
+    PULP_DOMAIN_ENABLED=false \
+    PULP_API_ROOT=/pulp/ \
+    PULP_CONTENT_PATH=/pulp/content/ \
+    PULP_API_HOST=pulp_api \
+    PULP_CONTENT_HOST=pulp_content \
+    PULP_STATIC_ROOT=/var/lib/operator/static/
+
+EXPOSE 8080 8443
+
+CMD ["/entrypoint.sh"]

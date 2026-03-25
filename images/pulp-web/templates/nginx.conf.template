@@ -1,0 +1,74 @@
+error_log /dev/stdout info;
+worker_processes 1;
+events {
+    worker_connections 1024;
+    accept_mutex off;
+}
+
+http {
+    access_log /dev/stdout;
+    include mime.types;
+    default_type application/octet-stream;
+    sendfile on;
+
+    # If left at the default of 1024, nginx emits a warning about being unable
+    # to build optimal hash types.
+    types_hash_max_size 4096;
+
+    server {
+        # Re-resolve DNS names every 10s for scaled services.
+        # https://www.nginx.com/blog/dns-service-discovery-nginx-plus#domain-name-variable
+        resolver ${NAMESERVER} valid=10s;
+        set $pulp_api ${PULP_API_HOST};
+        set $pulp_content ${PULP_CONTENT_HOST};
+
+        include /etc/nginx/pulp-web/server.d/*.conf;
+
+        server_name $hostname;
+
+        # The default client_max_body_size is 1m. Clients uploading
+        # files larger than this will need to chunk said files.
+        client_max_body_size 10m;
+
+        # Gunicorn docs suggest this value.
+        keepalive_timeout 5;
+
+        location ${PULP_CONTENT_PATH} {
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Host $http_host;
+            proxy_redirect off;
+            proxy_pass http://$pulp_content:24816;
+        }
+
+        location ${PULP_API_ROOT}api/v3/ {
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Host $http_host;
+            proxy_redirect off;
+            proxy_pass http://$pulp_api:24817;
+            client_max_body_size 0;
+        }
+
+        location /auth/login/ {
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Host $http_host;
+            proxy_redirect off;
+            proxy_pass http://$pulp_api:24817;
+        }
+
+        include /etc/nginx/pulp/*.conf;
+        include /etc/nginx/pulp-web/location.d/*.conf;
+
+        location / {
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header Host $http_host;
+            proxy_redirect off;
+            proxy_pass http://$pulp_api:24817;
+        }
+    }
+
+    include /etc/nginx/pulp-web/http.d/*.conf;
+}

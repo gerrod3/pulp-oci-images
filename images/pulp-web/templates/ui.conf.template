@@ -1,0 +1,11 @@
+location /static/pulp_ui/ {
+    root ${PULP_UI_ROOT};
+    try_files $uri /static/pulp_ui/index.html;
+}
+location /ui/ {
+    alias ${PULP_UI_STATIC};
+    try_files $uri /static/pulp_ui/index.html;
+}
+location /pulp-ui-config.json {
+    root ${PULP_UI_STATIC};
+}
