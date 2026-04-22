@@ -13,6 +13,7 @@ RUN uv pip install --upgrade \
   git+https://github.com/pulp/pulp_ostree@main \
   git+https://github.com/pulp/pulp_python@main \
   git+https://github.com/pulp/pulp_rpm@main \
+  git+https://github.com/pulp/pulp_rust@main \
   git+https://github.com/pulp/pulp_npm@main \
   git+https://github.com/pulp/pulp_hugging_face@main \
   -r /requirements.extra.txt \
