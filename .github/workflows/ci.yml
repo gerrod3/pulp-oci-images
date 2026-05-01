@@ -25,14 +25,14 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # by default, it uses a depth of 1
           # this fetches all history so that we can read each commit
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
 
@@ -63,7 +63,7 @@ jobs:
 
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Build base images
         id: build_base_images
@@ -121,15 +121,12 @@ jobs:
   pulp-operator:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Set up Python 3.11
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: 3.11
-
-    - name: Setup Go environment
-      uses: actions/setup-go@v5
 
     - name: Install httpie
       run: |
@@ -182,9 +179,15 @@ jobs:
         docker images
       shell: bash
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         repository: pulp/pulp-operator
+
+    - name: Setup Go environment
+      uses: actions/setup-go@v6
+      with:
+        # v6 sets GOTOOLCHAIN=local instead of auto-downloading, needs explicit version
+        go-version-file: go.mod
 
     - name: Run pulp-operator
       run: |
