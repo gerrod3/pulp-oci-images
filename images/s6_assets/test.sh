@@ -70,6 +70,7 @@ sudo sed -i "s\runner:165536:65536\runner:165536:75536\g" /etc/subuid /etc/subgi
 podman system migrate
 
 mkdir -p settings pulp_storage pgsql containers
+echo "SECRET_KEY = 'aabbcc'" >> settings/settings.py
 echo "CONTENT_ORIGIN='$scheme://localhost:8080'" >> settings/settings.py
 echo "ALLOWED_EXPORT_PATHS = ['/tmp']" >> settings/settings.py
 echo "ANALYTICS = False" >> settings/settings.py
