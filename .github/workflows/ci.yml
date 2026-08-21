@@ -196,12 +196,6 @@ jobs:
       with:
         repository: pulp/pulp-operator
 
-    # Remove once https://github.com/pulp/pulp-operator/pull/1667 is merged
-    - name: Fix push repo type in operator test scripts
-      run: |
-        sed -i 's/repository -t push show/repository show/g' .ci/scripts/pulp_container/export_repository.sh
-      shell: bash
-
     - name: Setup Go environment
       uses: actions/setup-go@v6
       with:
